@@ -217,26 +217,31 @@ The redirect to Auth0 contains two querystring parameters: `id_token` and `state
 No keys are hard-coded into the Webtask code. They are referred to by the variables `context.data.yubico_clientid` and `context.data.yubico_secret`. These parameters are securely embedded in the Webtask token when the Webtask is created.
 :::
 
-### 1. Initialize Webtask CLI
+### Generate Yubikey API key
 
-*Rules* code is automatically packaged as Webtasks by Auth0. Since this is a custom Webtask, it must be created with the Webtask CLI.
+Visit https://upgrade.yubico.com/getapikey/ and get a Yubikey API key so you can validate further Yubikeys. save your yubikey_secret and yubikey_clientid for later.
 
-Follow the instructions for installing Webtask CLI under [Account Settings > Webtasks](${manage_url}/#/account/webtasks) on the Auth0 dashboard.
+### Initialize Webtask
 
-Once the Webtask CLI is installed, run:
+*Rules* code is automatically packaged as Webtasks by Auth0. 
 
-```txt
-wt create --name yubikey-mfa --secret yubikey_secret={YOUR YUBIKEY SECRET} --secret yubikey_clientid={YOUR YUBIKEY CLIENT ID} --secret returnUrl=https://${account.namespace}/continue --profile {WEBTASK PROFILE} yubico-mfa-wt.js
-```
+To create your webtask, go to https://webtask.{YOUR-AUTH0-DOMAIN|it}.auth0.com/edit/ and name the script `yubikey-mfa`
 
-::: note
-Replace `WEBTASK PROFILE` in the code above with the value of the -p parameter shown at the end of the code in Step 2 of the [Account Settings > Webtasks](${manage_url}/#/account/webtasks) page.
-:::
+Paste in the code from https://github.com/auth0/rules/blob/master/redirect-rules/yubico-mfa.md
+
+Click the Wrench icon and select "Secrets"
+
+Enter credentials for:
+- yubikey_secret
+- yubikey_clientid
+- returnURL
+
+Go to Settings and ensure that `Merge Body` and `Parse Body` are checked. If you receive the error 'nonce not valid' it's likely that the script isn't parsing the OTP token.
 
 The `create` command will generate a URL that will look like:
 
 ```txt
-https://sandbox.it.auth0.com/api/run/${account.tenant}/yubikey-mfa?webtask_no_cache=1
+https://webtask.{YOUR-DOMAIN|it}.auth0.com/api/run/{YOUR TENANT}/yubikey-mfa
 ```
 
 Keep a copy of this URL.
@@ -268,7 +273,7 @@ function (user, context, callback) {
 
   //Trigger MFA
   context.redirect = {
-        url: config.WEBTASK_URL + "?user=" + user.name
+        url: configuration.WEBTASK_URL + "?user=" + user.name
   }
 
   callback(null,user,context);
